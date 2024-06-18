@@ -1,0 +1,9 @@
+Options All -Indexes
+Options -MultiViews
+Options +FollowSymLinks
+
+RewriteEngine On
+
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+Rewriterule ^([a-zA-Z0-9=]+)/$ index.php?callid=$1&%{QUERY_STRING} [L]

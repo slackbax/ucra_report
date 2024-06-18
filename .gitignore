@@ -1,0 +1,13 @@
+# all
+src/settings.php
+node_modules
+package-lock.json
+vendor
+composer.lock
+uploads
+# sepah - sepvhh
+.vscode
+.settings
+.templates
+# nacho - slackbax
+.idea

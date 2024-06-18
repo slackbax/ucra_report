@@ -1,0 +1,36 @@
+body {
+  height: 100vh;
+  background-color: #343a40 !important;
+}
+
+a {
+  cursor: pointer;
+}
+
+.noVisibility {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.btn-form {
+  margin-top: 32px;
+}
+
+.spinner-border {
+  display: none;
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  top: 14px;
+  right: 25px;
+}
+
+#result_div {
+  display: none;
+}
+
+#down_link {
+  display: none;
+}
+
+/*# sourceMappingURL=system.css.map */

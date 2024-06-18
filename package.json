@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "chart.js": "^4.4.3",
+    "chartjs-plugin-annotation": "^3.0.1",
+    "jquery": "3.7.0",
+    "jquery-form": "^4.3.0",
+    "jquery-multifile": "^2.2.2",
+    "moment": "^2.29.3",
+    "noty": "^3.2.0-beta-deprecated",
+    "sweetalert2": "^10.16.9"
+  }
+}
