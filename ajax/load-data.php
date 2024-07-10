@@ -116,7 +116,7 @@ if (extract($_POST)):
     $pulse = array_map('intval', $pulse);
 
     foreach ($systolic as $i => $sys) {
-      $average[] = round(($sys + $diastolic[$i]) / 2, 2);
+      $average[] = round(($sys/3) + (2*$diastolic[$i]/3), 2);
     }
 
     $stats = [
