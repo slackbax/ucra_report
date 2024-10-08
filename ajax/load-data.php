@@ -23,11 +23,15 @@ require $BASEDIR . 'src/fn.php';
 require $BASEDIR . 'vendor/autoload.php';
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Csv;
 
 if (extract($_POST)):
   try {
     $targetFile = rtrim(SAVE_FOLDER, '/') . '/' . $folder . '/upload.csv';
     $reader = IOFactory::createReader('Csv');
+    $ss = new Spreadsheet();
+    $sheet = $ss->getActiveSheet();
     $sp = $reader->load($targetFile);
     $ws = $sp->getActiveSheet();
     $max_data_row = $ws->getHighestDataRow();
@@ -40,6 +44,11 @@ if (extract($_POST)):
 
     $row_iterator = $ws->getRowIterator(2, $max_data_row);
     $row_num = 1;
+
+    $sheet->setCellValue('A1', 'Date');
+    $sheet->setCellValue('B1', 'Systolic');
+    $sheet->setCellValue('C1', 'Diastolic');
+    $sheet->setCellValue('D1', 'Pulse');
 
     foreach ($row_iterator as $row) {
       if ($row->isEmpty()) {
@@ -62,15 +71,20 @@ if (extract($_POST)):
               $date_tmp = explode(' ', $date_tmp)[0];
             $date_tmp = str_replace('/', '-', $date_tmp);
             $date = $date_tmp;
+
+            $sheet->setCellValue('A' . ($row_num + 1), $date);
             break;
           case $systolic_sel + 1:
             $sys = preg_replace('/[^0-9]/', '', $cell->getValue());
+            $sheet->setCellValue('B' . ($row_num + 1), $sys);
             break;
           case $diastolic_sel + 1:
             $dia = preg_replace('/[^0-9]/', '', $cell->getValue());
+            $sheet->setCellValue('C' . ($row_num + 1), $dia);
             break;
           case $pulse_sel + 1:
             $pul = preg_replace('/[^0-9]/', '', $cell->getValue());
+            $sheet->setCellValue('D' . ($row_num + 1), $pul);
             break;
           default:
             break;
@@ -81,6 +95,9 @@ if (extract($_POST)):
       $full_data[$date . '|' . $row_num] = ['systolic' => $sys, 'diastolic' => $dia, 'pulse' => $pul];
       $row_num++;
     }
+
+    $writer = new Csv($ss);
+    $writer->save(rtrim(SAVE_FOLDER, '/') . '/' . $folder . '/data.csv');
 
     ksort($full_data);
 
@@ -134,7 +151,7 @@ if (extract($_POST)):
     ];
 
     # FOLDER - DATE - SYSTOLIC - DIASTOLIC - PULSE
-    $comm = "python ../src/ucra.py " . $folder . " " . $date_sel . " " . $systolic_sel . " " . $diastolic_sel . " " . $pulse_sel;
+    $comm = "python ../src/ucra.py " . $folder;
     $output = exec($comm);
 
     $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, 'Letter', true, 'UTF-8', false);
