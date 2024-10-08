@@ -1,6 +1,5 @@
 <?php
-ini_set('display_errors',1);
-error_reporting(E_ALL);
+
 function format_array($arr): array
 {
   array_unshift($arr, null);
@@ -27,26 +26,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 if (extract($_POST)):
   try {
-    $directories = glob($BASEDIR . '/upload/*', GLOB_ONLYDIR);
-    foreach ($directories as $dir) {
-      delTree($dir);
-    }
-
-    $folder = rand(1, 100000);
-    if (file_exists(SAVE_FOLDER . '/' . $folder))
-      rmdir(SAVE_FOLDER . '/' . $folder);
-    mkdir(SAVE_FOLDER . '/' . $folder, 0755, true);
-
-    if (!empty($_FILES)):
-      foreach ($_FILES as $aux => $file):
-        $tempFile = $file['tmp_name'][0];
-        $targetFile = rtrim(SAVE_FOLDER, '/') . '/' . $folder . '/upload.csv';
-        if (!move_uploaded_file($tempFile, $targetFile)) {
-          throw new Exception('error de subida ' .$_FILES["file"]["error"]);
-        }
-      endforeach;
-    endif;
-
+    $targetFile = rtrim(SAVE_FOLDER, '/') . '/' . $folder . '/upload.csv';
     $reader = IOFactory::createReader('Csv');
     $sp = $reader->load($targetFile);
     $ws = $sp->getActiveSheet();
@@ -67,27 +47,29 @@ if (extract($_POST)):
       }
 
       $column_num = 1;
-      $column_iterator = $row->getCellIterator('A', 'E');
+      $column_iterator = $row->getCellIterator('A', 'Z');
       foreach ($column_iterator as $cell) {
         if ($cell->getValue() == null) {
           continue;
         }
 
         switch ($column_num) {
-          case 1:
-            $date_tmp = preg_replace("/[^0-9\-]/", '', $cell->getValue());
-            if ($date_tmp == null or $date_tmp == '') {
+          case $date_sel + 1:
+            $date_tmp = preg_replace("/[^0-9\-\/ ]/", '', $cell->getValue());
+            if ($date_tmp == null or $date_tmp == '')
               continue 2;
-            }
+            if (str_contains($date_tmp, ' '))
+              $date_tmp = explode(' ', $date_tmp)[0];
+            $date_tmp = str_replace('/', '-', $date_tmp);
             $date = $date_tmp;
             break;
-          case 3:
+          case $systolic_sel + 1:
             $sys = preg_replace('/[^0-9]/', '', $cell->getValue());
             break;
-          case 4:
+          case $diastolic_sel + 1:
             $dia = preg_replace('/[^0-9]/', '', $cell->getValue());
             break;
-          case 5:
+          case $pulse_sel + 1:
             $pul = preg_replace('/[^0-9]/', '', $cell->getValue());
             break;
           default:
@@ -102,7 +84,7 @@ if (extract($_POST)):
 
     ksort($full_data);
 
-    foreach($full_data as $date => $data) {
+    foreach ($full_data as $date => $data) {
       $dates[] = explode('|', $date)[0];
       $systolic[] = $data['systolic'];
       $diastolic[] = $data['diastolic'];
@@ -115,7 +97,7 @@ if (extract($_POST)):
     $pulse = array_map('intval', $pulse);
 
     foreach ($systolic as $i => $sys) {
-      $average[] = round(($sys/3) + (2*$diastolic[$i]/3), 2);
+      $average[] = round(($sys / 3) + (2 * $diastolic[$i] / 3), 2);
     }
 
     $stats = [
@@ -151,7 +133,8 @@ if (extract($_POST)):
       ]
     ];
 
-    $comm = "python ../src/ucra.py " . $folder;
+    # FOLDER - DATE - SYSTOLIC - DIASTOLIC - PULSE
+    $comm = "python ../src/ucra.py " . $folder . " " . $date_sel . " " . $systolic_sel . " " . $diastolic_sel . " " . $pulse_sel;
     $output = exec($comm);
 
     $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, 'Letter', true, 'UTF-8', false);

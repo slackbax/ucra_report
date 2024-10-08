@@ -2,14 +2,23 @@ import sys
 import pandas as pd
 from matplotlib import pyplot as plt
 import numpy as np
+from matplotlib.ticker import MaxNLocator
 
+# FOLDER - DATE - SYSTOLIC - DIASTOLIC - PULSE
 # READ CSV FILE
 folder = sys.argv[1]
+date = sys.argv[2]
+systolic = sys.argv[3]
+diastolic = sys.argv[4]
+pulse = sys.argv[5]
 file = '../upload/' + folder + '/upload.csv'
 
 # PRE-PROCESSING
 df = pd.read_csv(file, encoding='utf-16', sep='\t')
 # df = pd.read_csv(file, encoding='utf-8', sep=";")
+
+df = df.iloc[::-1]
+df.reset_index(drop=True, inplace=True)
 
 new_column = []
 for i in range(len(df)):
@@ -17,7 +26,7 @@ for i in range(len(df)):
                     +str(' ')+ df["Hora"][i])
 
 df["eje_x"] = new_column
-
+#afafa
 y_max = np.max(df["Sys"])
 y_min = np.min(df["Dia"])
 pa_max = np.max(df["Pulso"])
@@ -47,11 +56,18 @@ plt.plot(df["Sys"], 'k', linestyle='solid', color='#dc3545')
 plt.plot(df["Sys"], 'ro', label='Sistólica', color='#dc3545')
 plt.plot(df["Dia"], 'k', linestyle='solid', color='#325285')
 plt.plot(df["Dia"], 'bo', label='Diastólica', color='#325285')
-plt.plot(df[["Sys", "Dia"]].apply(np.mean, axis=1), color='w')
+we_mean = df["Sys"] * (1/3) + df["Dia"] * (2/3)
+plt.plot(we_mean, color='w')
 plt.hlines(140, -1, len(df), linestyle='dashed', color='#dc3545')
 plt.hlines(90, -1, len(df), linestyle='dashed', color='#325285')
 plt.vlines(mediciones_x_dia_std, y_min, y_max, linestyle='solid', color='black')
-plt.xticks(np.arange(0,len(df)), df["eje_x"], rotation = 90)
+
+# espaciado de etiquetas en x
+plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
+
+# Rotacion de 45 grados para diagonal
+plt.xticks(np.arange(0, len(df)), df["eje_x"], rotation=45, ha='right')
+
 plt.fill_between(np.arange(0,len(df)), df["Dia"], df["Sys"], color='#b7b7b7', alpha=0.5)
 plt.xlabel("Momento de medición", weight='bold')
 plt.ylabel("[mmHg]", weight='bold')
@@ -70,7 +86,13 @@ plt.title("Evolución de Frecuencia Cardiaca", weight='bold', fontsize='xx-large
 plt.plot(df["Pulso"], 'k', linestyle='solid', color='#5AA19C')
 plt.plot(df["Pulso"], 'go', label='Latidos por minuto', color='#5AA19C')
 plt.vlines(mediciones_x_dia_std, pa_min, pa_max, linestyle='solid', color='black')
-plt.xticks(np.arange(0,len(df)), df["eje_x"], rotation = 90)
+
+# espaciado de etiquetas en x
+plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
+
+# rotacion de 45 grados para diagonal
+plt.xticks(np.arange(0, len(df)), df["eje_x"], rotation=45, ha='right')
+
 plt.xlabel("Momento de medición")
 plt.ylabel("[BPM]")
 plt.xlim(-1, len(df))
@@ -80,4 +102,3 @@ plt.grid()
 plt.legend()
 
 plt.savefig('../upload/' + folder + '/HR_plot.png', format='png', dpi=300)
-

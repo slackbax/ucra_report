@@ -1,44 +1,108 @@
 $(document).ready(function () {
-  const $form = $('#form-kidney'), $data = $('#patdata_list'), $down = $('#down_link'), $loader = $('#loader'),
-    $result = $('#result_div'),
+  const $formLoad = $('#form-load'), $data = $('#patdata_list'), $down = $('#down_link'), $reload = $('#restart_link'),
+    $loader = $('#loader'), $loader2 = $('#loader2'),
+    $btnLoad = $('#btn-load'), $btnMap = $('#btn-map'),
+    $formMap = $('#form-mapping'), $folder = $('#folder'),
+    $dateSel = $('#date'), $pulseSel = $('#pulse'), $systolicSel = $('#systolic'), $diastolicSel = $('#diastolic'),
+    $columnMap = $('#column_map'), $result = $('#result_div'),
     pressureChart = document.getElementById('pressureChart'), heartChart = document.getElementById('heartChart'),
-    options = {
+    optionsLoad = {
+      url: 'ajax/process-csv.php',
+      type: 'post',
+      dataType: 'json',
+      beforeSubmit: validateFormLoad,
+      success: showResponseLoad
+    },
+    optionsMap = {
       url: 'ajax/load-data.php',
       type: 'post',
       dataType: 'json',
-      beforeSubmit: validateForm,
-      success: showResponse
+      beforeSubmit: validateFormMap,
+      success: showResponseMap
     }
 
   $('#patdata').MultiFile({
-    max: 2,
+    max: 1,
     accept: 'csv',
     STRING: {
-      selected:'Seleccionado: $file',
+      selected: 'Seleccionado: $file',
       denied: '¡Archivo de tipo .$ext no permitido! Inténtalo nuevamente.'
     }
   })
 
-  let pChart = '', hChart = ''
+  let pChart = '', hChart = '', data = ''
 
-  function validateForm() {
-    $loader.css('display', 'block');
+  function validateFormLoad() {
+    $loader.css('display', 'block')
+    $dateSel.empty().append('<option value="">Selecciona columna</option>')
+    $pulseSel.empty().append('<option value="">Selecciona columna</option>')
+    $systolicSel.empty().append('<option value="">Selecciona columna</option>')
+    $diastolicSel.empty().append('<option value="">Selecciona columna</option>')
 
-    if ($data.html() === '') {
+    let count = 0
+    $('.MultiFile-applied').each(function () {
+      count++
+    })
+
+    if (count === 1) {
       new Noty({
-        text: '<strong>¡Error!</strong><br>Debe elegir un archivo para analizar los datos.',
+        text: '<strong>¡Error!</strong><br>Debes elegir un archivo para analizar los datos.',
         type: 'error'
       }).show()
 
-      $loader.css('display', 'none');
-      return false;
+      $loader.css('display', 'none')
+      return false
     } else {
       return true
     }
   }
 
-  function showResponse(r) {
-    $loader.css('display', 'none');
+  function showResponseLoad(r) {
+    $loader.css('display', 'none')
+    $btnLoad.click()
+    if (r.type) {
+      new Noty({
+        text: '<strong>¡Éxito!</strong><br>El archivo ha sido evaluado correctamente.',
+        type: 'success'
+      }).show()
+
+      $('input:file').MultiFile('reset')
+      $columnMap.css('display', 'block')
+      r.headers.forEach(function (h, i) {
+        $dateSel.append('<option value="' + i + '">' + 'Columna ' + (i + 1) + ' - ' + h + '</option>')
+        $pulseSel.append('<option value="' + i + '">' + 'Columna ' + (i + 1) + ' - ' + h + '</option>')
+        $systolicSel.append('<option value="' + i + '">' + 'Columna ' + (i + 1) + ' - ' + h + '</option>')
+        $diastolicSel.append('<option value="' + i + '">' + 'Columna ' + (i + 1) + ' - ' + h + '</option>')
+      })
+
+      data = r.data
+      $folder.val(r.folder)
+    } else {
+      new Noty({
+        text: '<strong>¡Error!</strong><br>' + r.msg,
+        type: 'error'
+      }).show()
+    }
+  }
+
+  function validateFormMap() {
+    $loader2.css('display', 'block')
+    if ($dateSel.val() === '' || $pulseSel.val() === '' || $systolicSel.val() === '' || $diastolicSel.val() === '') {
+      new Noty({
+        text: '<strong>¡Error!</strong><br>Debes seleccionar todas las columnas.',
+        type: 'error'
+      }).show()
+
+      $loader2.css('display', 'none')
+      return false
+    } else {
+      return true
+    }
+  }
+
+  function showResponseMap(r) {
+    $loader2.css('display', 'none')
+    $btnMap.click()
     if (r.type) {
       new Noty({
         text: '<strong>¡Éxito!</strong><br>El archivo ha sido evaluado correctamente.',
@@ -47,6 +111,7 @@ $(document).ready(function () {
 
       $('input:file').MultiFile('reset')
       $down.attr('href', r.url).css('display', 'block')
+      $reload.css('display', 'block')
       $result.css('display', 'block');
 
       if (pChart !== '') pChart.destroy()
@@ -175,8 +240,17 @@ $(document).ready(function () {
     }
   }
 
-  $form.submit(function () {
-    $(this).ajaxSubmit(options)
+  $formLoad.submit(function () {
+    $(this).ajaxSubmit(optionsLoad)
     return false
+  })
+
+  $formMap.submit(function () {
+    $(this).ajaxSubmit(optionsMap)
+    return false
+  })
+
+  $reload.click(function () {
+    location.reload()
   })
 })
